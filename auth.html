@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="my">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Login | Sayarnge Official</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Padauk:wght@400;700&display=swap');
+:root{--gold:#d8ad55;--ink:#241b2c;--muted:#766d7b;--paper:#fffaf1}
+*{box-sizing:border-box}body{margin:0;min-height:100vh;display:grid;place-items:center;padding:22px;background:linear-gradient(145deg,#21152f,#49345b 55%,#21152f);font-family:Padauk,"Noto Sans Myanmar",sans-serif;color:var(--ink)}
+.card{width:min(100%,460px);background:var(--paper);border-radius:24px;padding:26px;box-shadow:0 18px 55px #10091c88}
+h1{text-align:center;color:#4a3156;margin:0 0 4px;font-size:25px}.sub{text-align:center;color:var(--muted);margin:0 0 20px}
+.tabs{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:18px}.tab{border:1px solid #e5d8c6;background:white;border-radius:12px;padding:10px;font:inherit;cursor:pointer}.tab.active{background:#f4e7c8;border-color:var(--gold);font-weight:bold}
+label{display:block;margin:12px 0 5px}input{width:100%;padding:12px;border:1px solid #ddd1c3;border-radius:11px;font:inherit;background:white}
+.btn{width:100%;border:0;border-radius:12px;background:linear-gradient(90deg,#b88735,#e0bd70);padding:12px;color:#241a24;font:700 16px Padauk;cursor:pointer;margin-top:18px}.btn:disabled{opacity:.6;cursor:wait}
+.msg{display:none;margin-top:14px;padding:12px;border-radius:11px;background:#f1ecf8;color:#49345b;white-space:pre-wrap}.msg.show{display:block}.small{text-align:center;color:var(--muted);font-size:12px;margin-top:18px}.back{display:block;text-align:center;margin-top:14px;color:#63477a;text-decoration:none}
+</style></head><body><main class="card">
+<h1>ဆရာငယ် (လိုတရ)</h1><p class="sub">Customer / Admin ဝင်ရောက်ရန်</p>
+<div class="tabs"><button class="tab active" id="customerTab" type="button">Customer</button><button class="tab" id="adminTab" type="button">Admin</button></div>
+<form id="authForm">
+<label for="email">Email</label><input id="email" type="email" autocomplete="email" required>
+<label for="password">Password</label><input id="password" type="password" minlength="8" autocomplete="new-password" required>
+<div id="confirmWrap"><label for="confirmPassword">Password ထပ်မံရိုက်ပါ</label><input id="confirmPassword" type="password" minlength="8" autocomplete="new-password"></div>
+<button class="btn" id="submitBtn" type="submit">Customer အကောင့်ဖွင့်မည်</button></form>
+<div class="msg" id="message" role="status" aria-live="polite"></div>
+<p class="small">Password ကို Website ထဲတွင် ကိုယ်တိုင်သိမ်းဆည်းခြင်းမပြုပါ။ Supabase Auth က စီမံပေးပါသည်။</p>
+<a class="back" href="index.html">ပင်မစာမျက်နှာသို့ ပြန်သွားရန်</a>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="supabase-config.js"></script><script src="auth.js"></script>
+</body></html>
