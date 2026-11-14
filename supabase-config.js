@@ -1,4 +1,4 @@
-// Supabase Dashboard > Project Settings > API မှ Project URL နှင့် anon/publishable key ကိုထည့်ပါ။
-// service_role / secret key ကို browser code ထဲ လုံးဝမထည့်ပါနှင့်။
-window.SUPABASE_URL = "YOUR_SUPABASE_PROJECT_URL";
-window.SUPABASE_ANON_KEY = "YOUR_SUPABASE_ANON_OR_PUBLISHABLE_KEY";
+// Supabase project connection settings.
+// Only the public anon/publishable key belongs here. Never add service_role or secret keys.
+window.SUPABASE_URL = "https://wfkdwbbxcgylgmrqkuov.supabase.co";
+window.SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indma2R3YmJ4Y2d5bGdtcnFrdW92Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM5NTUyMDEsImV4cCI6MjEwOTUzMTIwMX0.SMg95wegOBXHe-082sbE4pde_AjdFnsxZ0XgpSs6tqE";
