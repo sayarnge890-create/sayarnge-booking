@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="my"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Admin Dashboard | ဆရာငယ် (လိုတရ)</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Padauk:wght@400;700&display=swap');
+*{box-sizing:border-box}body{margin:0;background:#f7f2e9;color:#30243a;font-family:Padauk,sans-serif}
+header{background:#30213e;color:#fff;padding:18px 5%;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+main{max-width:1100px;margin:24px auto;padding:0 16px}.card{background:#fff;border:1px solid #e8dfd1;border-radius:16px;padding:18px;margin-bottom:16px}
+h1{font-size:24px;margin:0}h2{font-size:20px;margin:0 0 12px}
+input,button,select,textarea{font:inherit;padding:10px;border:1px solid #d8cdbd;border-radius:9px}
+input,textarea{width:100%;margin:5px 0 12px}button{cursor:pointer;background:#c49a4d;color:#21172b;border:0;font-weight:bold}
+button.secondary{background:#eee7dc}button:disabled{opacity:.5}
+.row{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px}
+.msg{white-space:pre-wrap;color:#654b78}.muted{color:#766d7b;font-size:14px}
+.list{display:grid;gap:12px}.booking{border:1px solid #e7dfd4;border-radius:12px;padding:14px}
+.booking h3{margin:0 0 6px}.booking p{margin:5px 0;white-space:pre-wrap;overflow-wrap:anywhere}
+.booking select{margin:5px 6px 5px 0}.booking textarea{min-height:70px}
+.hidden{display:none!important}.top-actions{display:flex;gap:8px;align-items:center}
+</style></head><body>
+<header><h1>ဆရာငယ် (လိုတရ) — Admin</h1><div class="top-actions"><button class="secondary" id="refresh" type="button">စာရင်းပြန်ဖွင့်</button><button class="secondary" id="logout" type="button">ထွက်မည်</button></div></header>
+<main>
+<section class="card" id="loginCard"><h2>Admin Login</h2><p class="muted">Admin အကောင့်ဖြင့်သာ ဝင်ရောက်နိုင်ပါသည်။</p>
+<label>Email</label><input id="email" type="email" autocomplete="username">
+<label>Password</label><input id="password" type="password" autocomplete="current-password">
+<button id="login" type="button">Login ဝင်မည်</button><p class="msg" id="loginMsg"></p></section>
+<section id="dashboard" class="hidden">
+<div class="card"><h2>Booking စာရင်း</h2><p class="muted" id="count">စာရင်းဖတ်နေပါသည်...</p><p class="msg" id="statusMsg"></p><div class="list" id="bookings"></div></div>
+</section>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="supabase-config.js"></script>
+<script>
+(() => {
+ const $=id=>document.getElementById(id);
+ const configured=window.SUPABASE_URL&&window.SUPABASE_ANON_KEY&&!window.SUPABASE_URL.includes('YOUR_')&&!window.SUPABASE_ANON_KEY.includes('YOUR_');
+ if(!configured||!window.supabase){$('loginMsg').textContent='Supabase URL နှင့် public anon key ကို supabase-config.js ထဲတွင် ထည့်သွင်းရန် လိုအပ်ပါသည်။';$('login').disabled=true;return;}
+ const db=window.supabase.createClient(window.SUPABASE_URL,window.SUPABASE_ANON_KEY);
+ function msg(t){$('statusMsg').textContent=t;}
+ async function requireAdmin(){
+   const {data:{user}}=await db.auth.getUser();
+   if(!user){$('loginCard').classList.remove('hidden');$('dashboard').classList.add('hidden');return false;}
+   const {data,error}=await db.from('user_roles').select('role').eq('user_id',user.id).maybeSingle();
+   if(error||data?.role!=='admin'){await db.auth.signOut();$('loginMsg').textContent='Admin ခွင့်ပြုချက် မရှိပါ။';return false;}
+   $('loginCard').classList.add('hidden');$('dashboard').classList.remove('hidden');return true;
+ }
+ async function load(){
+   if(!await requireAdmin())return;
+   msg('စာရင်းဖတ်နေပါသည်...');
+   const {data,error}=await db.from('bookings').select('*').order('created_at',{ascending:false}).limit(100);
+   if(error){msg('စာရင်းဖတ်မရပါ: '+error.message);return;}
+   $('count').textContent='နောက်ဆုံး Booking '+data.length+' ခုကို ပြထားပါသည်။';
+   $('bookings').replaceChildren();
+   if(!data.length){$('bookings').textContent='Booking မရှိသေးပါ။';msg('');return;}
+   data.forEach(b=>{
+     const card=document.createElement('article');card.className='booking';
+     const h=document.createElement('h3');h.textContent=b.customer_name+' — '+b.service;card.append(h);
+     const p=document.createElement('p');p.textContent='ဖုန်း: '+b.phone+' | ရက်စွဲ: '+new Date(b.created_at).toLocaleString();card.append(p);
+     [['မွေးဖွားမှုအချက်အလက်',b.birth_details],['ဖူးစာဖက်အချက်အလက်',b.partner_details],['မေးခွန်း',b.question]].forEach(([label,value])=>{if(value){const x=document.createElement('p');x.textContent=label+': '+value;card.append(x);}});
+     const pay=document.createElement('select');[['pending','ငွေလွှဲစစ်ဆေးရန်'],['approved','ငွေလွှဲအတည်ပြုပြီး'],['rejected','ငွေလွှဲငြင်းပယ်']].forEach(([v,t])=>{const o=document.createElement('option');o.value=v;o.textContent=t;pay.append(o)});pay.value=b.payment_status;card.append(pay);
+     const state=document.createElement('select');[['new','အသစ်'],['in_progress','ဆောင်ရွက်နေဆဲ'],['completed','ပြီးစီး'],['cancelled','ပယ်ဖျက်']].forEach(([v,t])=>{const o=document.createElement('option');o.value=v;o.textContent=t;state.append(o)});state.value=b.booking_status;card.append(state);
+     const result=document.createElement('textarea');result.placeholder='ဟောစာတမ်းစာသား (လိုအပ်ပါက)';result.value=b.result_text||'';card.append(result);
+     const save=document.createElement('button');save.textContent='အပြောင်းအလဲ သိမ်းမည်';save.addEventListener('click',async()=>{save.disabled=true;const {error}=await db.from('bookings').update({payment_status:pay.value,booking_status:state.value,result_text:result.value}).eq('id',b.id);save.disabled=false;msg(error?'သိမ်းမရပါ: '+error.message:'ပြောင်းလဲမှု သိမ်းပြီးပါပြီ။');});card.append(save);
+     $('bookings').append(card);
+   });
+   msg('');
+ }
+ $('login').addEventListener('click',async()=>{ $('loginMsg').textContent='';const {error}=await db.auth.signInWithPassword({email:$('email').value.trim(),password:$('password').value});if(error){$('loginMsg').textContent=error.message;return;}await load();});
+ $('refresh').addEventListener('click',load);
+ $('logout').addEventListener('click',async()=>{await db.auth.signOut();$('dashboard').classList.add('hidden');$('loginCard').classList.remove('hidden');});
+ load();
+})();
+</script></body></html>
