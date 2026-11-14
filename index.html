@@ -50,12 +50,36 @@ footer{text-align:center;color:#e9d8b8;font-size:12px;padding:18px}
 <button class="btn" onclick="submitDemo()">မေးမြန်းမည်</button>
 <div id="status" class="status hidden">ငွေလွှဲ စစ်ဆေးနေပါသည် (Pending) — Demo အခြေအနေ</div>
 </div></main></div><footer>© Sayarnge Official</footer></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-config.js"></script>
 <script>
 let selected="ဇာတာခွင် / ကံဇာတာ စစ်ဆေးခြင်း";
 document.querySelectorAll('.service').forEach(b=>b.addEventListener('click',()=>{
- document.querySelectorAll('.service').forEach(x=>x.classList.remove('active'));b.classList.add('active');selected=b.dataset.name;
+ document.querySelectorAll('.service').forEach(x=>x.classList.remove('active'));
+ b.classList.add('active');selected=b.dataset.name;
  document.getElementById('partner').classList.toggle('hidden',!selected.includes('ဖူးစာ'));
  document.getElementById('price').textContent=selected.includes('ဖူးစာ')?'ကျသင့်ငွေ — ၉၀,၀၀၀ ကျပ်':'ကျသင့်ငွေ — ဝန်ဆောင်မှုအလိုက် အတည်ပြုမည်';
 }));
-function submitDemo(){if(!document.getElementById('name').value||!document.getElementById('phone').value){alert('အမည်နှင့် ဖုန်းနံပါတ် ဖြည့်ပေးပါ။');return;}document.getElementById('status').classList.remove('hidden');}
+async function submitDemo(){
+ const name=document.getElementById('name').value.trim();
+ const phone=document.getElementById('phone').value.trim();
+ if(!name||!phone){alert('အမည်နှင့် ဖုန်းနံပါတ် ဖြည့်ပေးပါ။');return;}
+ const configured=window.SUPABASE_URL&&window.SUPABASE_ANON_KEY&&!window.SUPABASE_URL.includes('YOUR_')&&!window.SUPABASE_ANON_KEY.includes('YOUR_');
+ if(!configured||!window.supabase){alert('Booking ကို အမှန်တကယ်သိမ်းရန် Supabase ချိတ်ဆက်မှု မပြီးသေးပါ။');return;}
+ const btn=document.querySelector('.btn');btn.disabled=true;btn.textContent='ပို့နေပါသည်...';
+ try{
+  const db=window.supabase.createClient(window.SUPABASE_URL,window.SUPABASE_ANON_KEY);
+  const areas=document.querySelectorAll('textarea');
+  const {error}=await db.from('bookings').insert({
+   customer_name:name,phone,service:selected,
+   birth_details:areas[0]?.value||'',
+   partner_details:areas[1]?.value||'',
+   question:areas[2]?.value||''
+  });
+  if(error)throw error;
+  document.getElementById('status').textContent='စာရင်းသွင်းမှုကို လက်ခံရရှိပါပြီ။ ငွေလွှဲစလစ်နှင့် ဓာတ်ပုံကို လက်ရှိတွင် Website မှ မသိမ်းဆည်းရသေးပါ။';
+  document.getElementById('status').classList.remove('hidden');
+  btn.textContent='စာရင်းသွင်းပြီးပါပြီ';
+ }catch(e){alert('စာရင်းသွင်းမှု မအောင်မြင်ပါ။ '+(e.message||''));btn.disabled=false;btn.textContent='မေးမြန်းမည်';}
+}
 </script></body></html>
