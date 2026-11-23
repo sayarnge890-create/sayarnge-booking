@@ -22,7 +22,15 @@ button.secondary{background:#eee7dc}button:disabled{opacity:.5}
 <section class="card" id="loginCard"><h2>Admin Login</h2><p class="muted">Admin အကောင့်ဖြင့်သာ ဝင်ရောက်နိုင်ပါသည်။</p>
 <label>Email</label><input id="email" type="email" autocomplete="username">
 <label>Password</label><input id="password" type="password" autocomplete="current-password">
-<button id="login" type="button">Login ဝင်မည်</button><p class="msg" id="loginMsg"></p></section>
+<button id="login" type="button">Login ဝင်မည်</button>
+<button class="secondary" id="forgot" type="button">Password မေ့နေပါသလား?</button>
+<p class="msg" id="loginMsg"></p></section>
+<section class="card hidden" id="resetCard"><h2>Password အသစ်သတ်မှတ်ရန်</h2>
+<p class="muted">Password အသစ်ကို နှစ်ကြိမ်ထည့်ပါ။</p>
+<label>Password အသစ်</label><input id="newPassword" type="password" autocomplete="new-password">
+<label>Password အသစ် ထပ်ထည့်ပါ</label><input id="confirmPassword" type="password" autocomplete="new-password">
+<button id="savePassword" type="button">Password အသစ် သိမ်းမည်</button>
+<p class="msg" id="resetMsg"></p></section>
 <section id="dashboard" class="hidden">
 <div class="card"><h2>Booking စာရင်း</h2><p class="muted" id="count">စာရင်းဖတ်နေပါသည်...</p><p class="msg" id="statusMsg"></p><div class="list" id="bookings"></div></div>
 </section>
@@ -32,8 +40,9 @@ button.secondary{background:#eee7dc}button:disabled{opacity:.5}
 (() => {
  const $=id=>document.getElementById(id);
  const configured=window.SUPABASE_URL&&window.SUPABASE_ANON_KEY&&!window.SUPABASE_URL.includes('YOUR_')&&!window.SUPABASE_ANON_KEY.includes('YOUR_');
- if(!configured||!window.supabase){$('loginMsg').textContent='Supabase URL နှင့် public anon key ကို supabase-config.js ထဲတွင် ထည့်သွင်းရန် လိုအပ်ပါသည်။';$('login').disabled=true;return;}
+ if(!configured||!window.supabase){$('loginMsg').textContent='Supabase URL နှင့် public anon key ကို supabase-config.js ထဲတွင် ထည့်သွင်းရန် လိုအပ်ပါသည်။';$('login').disabled=true;$('forgot').disabled=true;return;}
  const db=window.supabase.createClient(window.SUPABASE_URL,window.SUPABASE_ANON_KEY);
+ const redirectUrl=window.location.origin+window.location.pathname+'?reset=1';
  function msg(t){$('statusMsg').textContent=t;}
  async function requireAdmin(){
    const {data:{user}}=await db.auth.getUser();
@@ -64,8 +73,43 @@ button.secondary{background:#eee7dc}button:disabled{opacity:.5}
    msg('');
  }
  $('login').addEventListener('click',async()=>{ $('loginMsg').textContent='';const {error}=await db.auth.signInWithPassword({email:$('email').value.trim(),password:$('password').value});if(error){$('loginMsg').textContent=error.message;return;}await load();});
+ $('forgot').addEventListener('click',async()=>{
+   $('loginMsg').textContent='';
+   const email=$('email').value.trim();
+   if(!email){$('loginMsg').textContent='အရင်ဆုံး Email နေရာတွင် Admin Email ထည့်ပါ။';return;}
+   $('forgot').disabled=true;
+   const {error}=await db.auth.resetPasswordForEmail(email,{redirectTo:redirectUrl});
+   $('forgot').disabled=false;
+   $('loginMsg').textContent=error?'Password Reset Email ပို့မရပါ: '+error.message:'Password Reset Email ပို့ပြီးပါပြီ။ Gmail ထဲက Email အသစ်ကိုဖွင့်ပါ။';
+ });
+ db.auth.onAuthStateChange((event)=>{
+   if(event==='PASSWORD_RECOVERY'){
+     $('loginCard').classList.add('hidden');
+     $('resetCard').classList.remove('hidden');
+     $('dashboard').classList.add('hidden');
+     $('resetMsg').textContent='Password အသစ် သတ်မှတ်နိုင်ပါပြီ။';
+   }
+ });
+ $('savePassword').addEventListener('click',async()=>{
+   const p=$('newPassword').value, c=$('confirmPassword').value;
+   $('resetMsg').textContent='';
+   if(p.length<8){$('resetMsg').textContent='Password အနည်းဆုံး ၈ လုံးထားပါ။';return;}
+   if(p!==c){$('resetMsg').textContent='Password နှစ်ခု မတူပါ။';return;}
+   $('savePassword').disabled=true;
+   const {error}=await db.auth.updateUser({password:p});
+   $('savePassword').disabled=false;
+   if(error){$('resetMsg').textContent='Password ပြောင်းမရပါ: '+error.message;return;}
+   $('resetMsg').textContent='Password အသစ် သိမ်းပြီးပါပြီ။ Login ပြန်ဝင်နိုင်ပါပြီ။';
+   await db.auth.signOut();
+   $('resetCard').classList.add('hidden');
+   $('loginCard').classList.remove('hidden');
+   $('password').value='';
+ });
  $('refresh').addEventListener('click',load);
  $('logout').addEventListener('click',async()=>{await db.auth.signOut();$('dashboard').classList.add('hidden');$('loginCard').classList.remove('hidden');});
+ if(new URLSearchParams(window.location.search).has('reset')){
+   $('loginMsg').textContent='Gmail ထဲက Password Reset Link ကို ဒီစာမျက်နှာမှာ ဖွင့်ပါ။';
+ }
  load();
 })();
 </script></body></html>
