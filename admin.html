@@ -78,7 +78,7 @@ button.secondary{background:#eee7dc}button:disabled{opacity:.5}
    const email=$('email').value.trim();
    $('loginMsg').textContent='';
    if(!email){$('loginMsg').textContent='အရင်ဆုံး Email နေရာတွင် Admin Email ထည့်ပါ။';$('email').focus();return;}
-   if(!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email)){ $('loginMsg').textContent='Email လိပ်စာ မှန်ကန်စွာ ထည့်ပါ။';$('email').focus();return; }
+    if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){ $('loginMsg').textContent='Email လိပ်စာ မှန်ကန်စွာ ထည့်ပါ။';$('email').focus();return; }
    $('forgot').disabled=true;
    $('loginMsg').textContent='Password Reset Email ပို့နေပါသည်...';
    try {
