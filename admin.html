@@ -41,8 +41,9 @@ button.secondary{background:#eee7dc}button:disabled{opacity:.5}
  const $=id=>document.getElementById(id);
  const configured=window.SUPABASE_URL&&window.SUPABASE_ANON_KEY&&!window.SUPABASE_URL.includes('YOUR_')&&!window.SUPABASE_ANON_KEY.includes('YOUR_');
  if(!configured||!window.supabase){$('loginMsg').textContent='Supabase URL နှင့် public anon key ကို supabase-config.js ထဲတွင် ထည့်သွင်းရန် လိုအပ်ပါသည်။';$('login').disabled=true;$('forgot').disabled=true;return;}
- const db=window.supabase.createClient(window.SUPABASE_URL,window.SUPABASE_ANON_KEY);
+ const db=window.supabase.createClient(window.SUPABASE_URL,window.SUPABASE_ANON_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true,flowType:'pkce'}});
  const redirectUrl=window.location.origin+window.location.pathname+'?reset=1';
+ function showResetForm(){ $('loginCard').classList.add('hidden'); $('resetCard').classList.remove('hidden'); $('dashboard').classList.add('hidden'); $('resetMsg').textContent='Password အသစ် သတ်မှတ်နိုင်ပါပြီ။'; }
  function msg(t){$('statusMsg').textContent=t;}
  async function requireAdmin(){
    const {data:{user}}=await db.auth.getUser();
@@ -83,13 +84,15 @@ button.secondary{background:#eee7dc}button:disabled{opacity:.5}
    $('loginMsg').textContent=error?'Password Reset Email ပို့မရပါ: '+error.message:'Password Reset Email ပို့ပြီးပါပြီ။ Gmail ထဲက Email အသစ်ကိုဖွင့်ပါ။';
  });
  db.auth.onAuthStateChange((event)=>{
-   if(event==='PASSWORD_RECOVERY'){
-     $('loginCard').classList.add('hidden');
-     $('resetCard').classList.remove('hidden');
-     $('dashboard').classList.add('hidden');
-     $('resetMsg').textContent='Password အသစ် သတ်မှတ်နိုင်ပါပြီ။';
-   }
+   if(event==='PASSWORD_RECOVERY') showResetForm();
  });
+ // The recovery callback may finish before the listener is attached.
+ (async()=>{
+   const {data,error}=await db.auth.getSession();
+   const hasResetFlag=new URLSearchParams(window.location.search).has('reset');
+   if(!error && data.session && hasResetFlag) showResetForm();
+   else if(hasResetFlag) $('loginMsg').textContent='Recovery session မရရှိသေးပါ။ Gmail ထဲက နောက်ဆုံး Reset Link ကို ပြန်ဖွင့်ပါ။';
+ })();
  $('savePassword').addEventListener('click',async()=>{
    const p=$('newPassword').value, c=$('confirmPassword').value;
    $('resetMsg').textContent='';
