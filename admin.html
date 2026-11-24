@@ -75,13 +75,20 @@ button.secondary{background:#eee7dc}button:disabled{opacity:.5}
  }
  $('login').addEventListener('click',async()=>{ $('loginMsg').textContent='';const {error}=await db.auth.signInWithPassword({email:$('email').value.trim(),password:$('password').value});if(error){$('loginMsg').textContent=error.message;return;}await load();});
  $('forgot').addEventListener('click',async()=>{
-   $('loginMsg').textContent='';
    const email=$('email').value.trim();
-   if(!email){$('loginMsg').textContent='အရင်ဆုံး Email နေရာတွင် Admin Email ထည့်ပါ။';return;}
+   $('loginMsg').textContent='';
+   if(!email){$('loginMsg').textContent='အရင်ဆုံး Email နေရာတွင် Admin Email ထည့်ပါ။';$('email').focus();return;}
+   if(!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email)){ $('loginMsg').textContent='Email လိပ်စာ မှန်ကန်စွာ ထည့်ပါ။';$('email').focus();return; }
    $('forgot').disabled=true;
-   const {error}=await db.auth.resetPasswordForEmail(email,{redirectTo:redirectUrl});
-   $('forgot').disabled=false;
-   $('loginMsg').textContent=error?'Password Reset Email ပို့မရပါ: '+error.message:'Password Reset Email ပို့ပြီးပါပြီ။ Gmail ထဲက Email အသစ်ကိုဖွင့်ပါ။';
+   $('loginMsg').textContent='Password Reset Email ပို့နေပါသည်...';
+   try {
+     const {error}=await db.auth.resetPasswordForEmail(email,{redirectTo:redirectUrl});
+     $('loginMsg').textContent=error?'Password Reset Email ပို့မရပါ: '+error.message:'Password Reset Email ပို့ပြီးပါပြီ။ Inbox နှင့် Spam ကို စစ်ပါ။';
+   } catch(e) {
+     $('loginMsg').textContent='Email ပို့ရာတွင် ချိတ်ဆက်မှုအမှား ဖြစ်နေပါသည်: '+(e?.message||'မသိရှိသောအမှား');
+   } finally {
+     $('forgot').disabled=false;
+   }
  });
  db.auth.onAuthStateChange((event)=>{
    if(event==='PASSWORD_RECOVERY') showResetForm();
